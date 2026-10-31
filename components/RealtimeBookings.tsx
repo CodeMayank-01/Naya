@@ -35,7 +35,6 @@ export default function RealtimeBookings({
       )
       .subscribe()
 
-    // Cleanup zaruri hai warna duplicate subscriptions hoti hain
     return () => {
       supabase.removeChannel(channel)
     }
