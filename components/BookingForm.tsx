@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 type Service = { id: string; name: string; duration_min: number; price: number }
@@ -23,9 +23,16 @@ export default function BookingForm({
   const [slot, setSlot] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Razorpay script load
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+  }, [])
+
   const selectedService = services.find((s) => s.id === serviceId)
 
-  // Simple slots: next 8 hours, 30-min interval
   const slots = useMemo(() => {
     if (!selectedService) return []
     const arr = []
@@ -55,7 +62,6 @@ export default function BookingForm({
     const end = new Date(start.getTime() + selectedService.duration_min * 60000)
     const commission = (selectedService.price * commissionPct) / 100
 
-    // 1. Booking create (pending)
     const { data: booking, error } = await supabase
       .from('bookings')
       .insert({
@@ -78,7 +84,6 @@ export default function BookingForm({
       return alert(error.message)
     }
 
-    // 2. Razorpay order create
     const res = await fetch('/api/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,7 +96,6 @@ export default function BookingForm({
       return alert(order.error ?? 'Order fail')
     }
 
-    // 3. Razorpay checkout open
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       amount: order.amount,
@@ -99,7 +103,7 @@ export default function BookingForm({
       name: 'SalonAdda',
       order_id: order.id,
       handler: async function () {
-        alert('Payment ho gaya! Salon ko booking dikh jayegi.')
+        alert('Payment ho gaya!')
         window.location.href = '/'
       },
     }
@@ -171,8 +175,6 @@ export default function BookingForm({
       >
         {loading ? 'Process...' : 'Book & Pay'}
       </button>
-
-      <script src="https://checkout.razorpay.com/v1/checkout.js" async />
     </div>
   )
 }
