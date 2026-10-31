@@ -36,6 +36,7 @@ export default function SalonSetup({
   const [lat, setLat] = useState('')
   const [lng, setLng] = useState('')
   const [creatingSalon, setCreatingSalon] = useState(false)
+  const [locating, setLocating] = useState(false)
 
   // Service form
   const [serviceName, setServiceName] = useState('')
@@ -48,9 +49,28 @@ export default function SalonSetup({
   const [tableLabel, setTableLabel] = useState('')
   const [addingTable, setAddingTable] = useState(false)
 
+  function getCurrentLocation() {
+    if (!navigator.geolocation) {
+      return alert('Browser location support nahi karta')
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6))
+        setLng(pos.coords.longitude.toFixed(6))
+        setLocating(false)
+      },
+      (err) => {
+        setLocating(false)
+        alert('Location nahi mili: ' + err.message)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   async function createSalon() {
     if (!salonName || !salonAddress || !lat || !lng) {
-      return alert('Sab fields bharo')
+      return alert('Sab fields bharo (location button dabao ya manually daalo)')
     }
     setCreatingSalon(true)
 
@@ -134,24 +154,36 @@ export default function SalonSetup({
           onChange={(e) => setSalonAddress(e.target.value)}
           className="border p-3 w-full rounded"
         />
+
+        <button
+          type="button"
+          onClick={getCurrentLocation}
+          disabled={locating}
+          className="bg-blue-600 text-white w-full py-3 rounded disabled:opacity-50"
+        >
+          {locating ? 'Location le raha...' : '📍 Meri Location Lo'}
+        </button>
+
         <div className="grid grid-cols-2 gap-2">
           <input
-            placeholder="Latitude (e.g. 28.6139)"
+            placeholder="Latitude"
             value={lat}
             onChange={(e) => setLat(e.target.value)}
             className="border p-3 w-full rounded"
           />
           <input
-            placeholder="Longitude (e.g. 77.2090)"
+            placeholder="Longitude"
             value={lng}
             onChange={(e) => setLng(e.target.value)}
             className="border p-3 w-full rounded"
           />
         </div>
+
         <p className="text-xs text-gray-500">
-          Location kaise nikalein: Google Maps par apni dukan pe right-click
-          karein, lat/lng copy ho jayenge.
+          Location button dabao ya Google Maps par dukan pe right-click karke
+          lat/lng copy karo.
         </p>
+
         <button
           onClick={createSalon}
           disabled={creatingSalon}
