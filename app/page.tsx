@@ -18,6 +18,12 @@ export default function HomePage() {
   const supabase = createClient()
 
   useEffect(() => {
+    if (!navigator.geolocation) {
+      alert('Browser location support nahi karta')
+      setLoading(false)
+      return
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords
@@ -26,7 +32,7 @@ export default function HomePage() {
           user_lng: longitude,
           radius_m: 5000,
         })
-        if (!error && data) setSalons(data)
+        if (!error && data) setSalons(data as Salon[])
         setLoading(false)
       },
       () => {
@@ -34,16 +40,23 @@ export default function HomePage() {
         setLoading(false)
       }
     )
-  }, [])
-
-  if (loading) return <p className="p-6">Location se salons dhoondh rahe hain...</p>
+  }, [supabase])
 
   return (
     <main className="max-w-2xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">SalonAdda</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">SalonAdda</h1>
+        <Link href="/login" className="text-sm underline">
+          Login
+        </Link>
+      </div>
       <p className="text-gray-500 mb-4">Aapke paas ke open salons</p>
 
-      {salons.length === 0 && <p>5km ke andar koi salon nahi mila.</p>}
+      {loading && <p>Location se salons dhoondh rahe hain...</p>}
+
+      {!loading && salons.length === 0 && (
+        <p>5km ke andar koi salon nahi mila.</p>
+      )}
 
       <div className="space-y-3">
         {salons.map((s) => (
