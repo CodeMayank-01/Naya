@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import RealtimeBookings from '@/components/RealtimeBookings'
+import SalonSetup from '@/components/SalonSetup'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,22 +10,36 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return <p className="p-6">Login karo (salon owner account se)</p>
+    return <p className="p-6">Login karo pehle</p>
   }
 
   const { data: salon } = await supabase
     .from('salons')
-    .select('id, name')
+    .select('*')
     .eq('owner_id', user.id)
-    .single()
+    .maybeSingle()
 
+  // Agar salon nahi hai, toh setup form dikhao
   if (!salon) {
     return (
-      <p className="p-6">
-        Pehle salon create karo (Supabase Table Editor mein insert karo)
-      </p>
+      <main className="max-w-2xl mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">Apna Salon Setup Karo</h1>
+        <SalonSetup ownerId={user.id} />
+      </main>
     )
   }
+
+  const { data: services } = await supabase
+    .from('services')
+    .select('*')
+    .eq('salon_id', salon.id)
+    .order('created_at', { ascending: true })
+
+  const { data: tables } = await supabase
+    .from('salon_tables')
+    .select('*')
+    .eq('salon_id', salon.id)
+    .order('created_at', { ascending: true })
 
   const { data: bookings } = await supabase
     .from('bookings')
@@ -34,7 +49,17 @@ export default async function DashboardPage() {
 
   return (
     <main className="max-w-2xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">{salon.name} Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-2">{salon.name} Dashboard</h1>
+      <p className="text-gray-500 mb-6">{salon.address}</p>
+
+      <SalonSetup
+        ownerId={user.id}
+        salonId={salon.id}
+        existingServices={services ?? []}
+        existingTables={tables ?? []}
+      />
+
+      <h2 className="text-xl font-bold mt-8 mb-4">Bookings</h2>
       <RealtimeBookings salonId={salon.id} initial={bookings ?? []} />
     </main>
   )
