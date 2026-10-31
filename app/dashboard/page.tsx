@@ -19,7 +19,11 @@ export default async function DashboardPage() {
     .single()
 
   if (!salon) {
-    return <p className="p-6">Pehle salon create karo (Supabase mein insert karo)</p>
+    return (
+      <p className="p-6">
+        Pehle salon create karo (Supabase Table Editor mein insert karo)
+      </p>
+    )
   }
 
   const { data: bookings } = await supabase
