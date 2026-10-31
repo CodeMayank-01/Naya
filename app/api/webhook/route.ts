@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
 
   if (event.event === 'payment.captured') {
     const payment = event.payload.payment.entity
-    const bookingId = payment.notes?.booking_id ?? payment.order_id
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
